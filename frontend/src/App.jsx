@@ -11,6 +11,7 @@ import AdminPrijave from './pages/admin/AdminPrijave'
 import SpisakPoTerminu from './pages/admin/SpisakPoTerminu'
 import AdminCenovnik from './pages/admin/AdminCenovnik'
 import Statistika from './pages/admin/Statistika'
+import Pocetna from './pages/Pocetna'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <BrowserRouter>
         <Navigacija />
         <Routes>
+          <Route path="/" element={<Pocetna />} />
           <Route path="/" element={<Navigate to="/termini" replace />} />
           <Route path="/prijava" element={<Prijava />} />
           <Route path="/registracija" element={<Registracija />} />
