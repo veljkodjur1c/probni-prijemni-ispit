@@ -6,6 +6,10 @@ import Prijava from './pages/Prijava'
 import Registracija from './pages/Registracija'
 import Termini from './pages/Termini'
 import MojePrijave from './pages/MojePrijave'
+import AdminTermini from './pages/admin/AdminTermini'
+import AdminPrijave from './pages/admin/AdminPrijave'
+import SpisakPoTerminu from './pages/admin/SpisakPoTerminu'
+import AdminCenovnik from './pages/admin/AdminCenovnik'
 
 function App() {
   return (
@@ -22,6 +26,38 @@ function App() {
             element={
               <ZasticenaRuta>
                 <MojePrijave />
+              </ZasticenaRuta>
+            }
+          />
+          <Route
+            path="/admin/termini"
+            element={
+              <ZasticenaRuta samoAdmin>
+                <AdminTermini />
+              </ZasticenaRuta>
+            }
+          />
+          <Route
+            path="/admin/prijave"
+            element={
+              <ZasticenaRuta samoAdmin>
+                <AdminPrijave />
+              </ZasticenaRuta>
+            }
+          />
+          <Route
+            path="/admin/spisak"
+            element={
+              <ZasticenaRuta samoAdmin>
+                <SpisakPoTerminu />
+              </ZasticenaRuta>
+            }
+          />
+          <Route
+            path="/admin/cenovnik"
+            element={
+              <ZasticenaRuta samoAdmin>
+                <AdminCenovnik />
               </ZasticenaRuta>
             }
           />

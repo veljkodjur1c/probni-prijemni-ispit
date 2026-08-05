@@ -29,7 +29,13 @@ export default function Navigacija() {
           {jeAdmin && (
             <>
               <li className="nav-item">
+                <Link className="nav-link" to="/admin/termini">Upravljanje terminima</Link>
+              </li>
+              <li className="nav-item">
                 <Link className="nav-link" to="/admin/prijave">Prijave</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin/spisak">Spisak kandidata</Link>
               </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/admin/cenovnik">Cenovnik</Link>
