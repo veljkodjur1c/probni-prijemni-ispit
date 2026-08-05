@@ -36,3 +36,8 @@ export const uplatniceApi = {
   preuzmi: (prijavaId) =>
     klijent.get(`/uplatnice/prijava/${prijavaId}`, { responseType: 'blob' })
 }
+
+export const izvozApi = {
+  spisak: (terminId) =>
+    klijent.get(`/izvoz/spisak/termin/${terminId}`, { responseType: 'blob' })
+}

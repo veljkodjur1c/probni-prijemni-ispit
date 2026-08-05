@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { prijaveApi, terminiApi } from '../../api/servisi'
+import { prijaveApi, terminiApi, izvozApi } from '../../api/servisi'
+import { sacuvajFajl } from '../../api/preuzimanje'
 
 export default function SpisakPoTerminu() {
   const [termini, setTermini] = useState([])
   const [prijave, setPrijave] = useState([])
   const [terminId, setTerminId] = useState('')
+  const [greska, setGreska] = useState('')
   const [ucitava, setUcitava] = useState(true)
 
   useEffect(() => {
@@ -19,8 +21,20 @@ export default function SpisakPoTerminu() {
       ])
       setTermini(odgTermini.data)
       setPrijave(odgPrijave.data)
+    } catch {
+      setGreska('Greška pri učitavanju podataka')
     } finally {
       setUcitava(false)
+    }
+  }
+
+  const izvezi = async () => {
+    setGreska('')
+    try {
+      const odgovor = await izvozApi.spisak(terminId)
+      sacuvajFajl(odgovor.data, `spisak-termin-${terminId}.xlsx`)
+    } catch {
+      setGreska('Greška pri izvozu spiska')
     }
   }
 
@@ -40,6 +54,8 @@ export default function SpisakPoTerminu() {
   return (
     <div className="container">
       <h3 className="mb-4">Spisak prijavljenih kandidata</h3>
+
+      {greska && <div className="alert alert-danger">{greska}</div>}
 
       <div className="row mb-4">
         <div className="col-md-6">
@@ -70,7 +86,13 @@ export default function SpisakPoTerminu() {
         </div>
       ) : (
         <>
-          <p className="text-muted">Broj kandidata: {kandidati.length}</p>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <p className="text-muted mb-0">Broj kandidata: {kandidati.length}</p>
+            <button className="btn btn-outline-success btn-sm" onClick={izvezi}>
+              Izvezi u Excel
+            </button>
+          </div>
+
           <table className="table table-hover">
             <thead>
               <tr>
