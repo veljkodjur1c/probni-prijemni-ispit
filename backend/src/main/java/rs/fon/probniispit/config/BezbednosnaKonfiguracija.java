@@ -52,7 +52,7 @@ public class BezbednosnaKonfiguracija {
     @Bean
     public CorsConfigurationSource corsKonfiguracija() {
         CorsConfiguration k = new CorsConfiguration();
-        k.setAllowedOrigins(List.of("http://localhost:3000"));
+        k.setAllowedOrigins(List.of("http://localhost:5173"));
         k.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         k.setAllowedHeaders(List.of("*"));
         k.setAllowCredentials(true);
