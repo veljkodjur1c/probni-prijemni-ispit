@@ -40,6 +40,9 @@ export default function Navigacija() {
               <li className="nav-item">
                 <Link className="nav-link" to="/admin/cenovnik">Cenovnik</Link>
               </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin/statistika">Statistika</Link>
+              </li>
             </>
           )}
         </ul>

@@ -10,6 +10,7 @@ import AdminTermini from './pages/admin/AdminTermini'
 import AdminPrijave from './pages/admin/AdminPrijave'
 import SpisakPoTerminu from './pages/admin/SpisakPoTerminu'
 import AdminCenovnik from './pages/admin/AdminCenovnik'
+import Statistika from './pages/admin/Statistika'
 
 function App() {
   return (
@@ -58,6 +59,14 @@ function App() {
             element={
               <ZasticenaRuta samoAdmin>
                 <AdminCenovnik />
+              </ZasticenaRuta>
+            }
+          />
+          <Route
+            path="/admin/statistika"
+            element={
+              <ZasticenaRuta samoAdmin>
+                <Statistika />
               </ZasticenaRuta>
             }
           />

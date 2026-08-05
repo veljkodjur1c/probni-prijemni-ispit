@@ -41,3 +41,7 @@ export const izvozApi = {
   spisak: (terminId) =>
     klijent.get(`/izvoz/spisak/termin/${terminId}`, { responseType: 'blob' })
 }
+
+export const statistikaApi = {
+  ucitaj: () => klijent.get('/statistika')
+}
