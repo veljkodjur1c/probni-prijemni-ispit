@@ -2,13 +2,16 @@ package rs.fon.probniispit.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import rs.fon.probniispit.dto.PrijavaDTO;
 import rs.fon.probniispit.exception.KonfliktException;
 import rs.fon.probniispit.exception.NevalidanZahtevException;
 import rs.fon.probniispit.exception.NijePronadjenoException;
 import rs.fon.probniispit.mapper.Mapper;
-import rs.fon.probniispit.model.*;
+import rs.fon.probniispit.model.Korisnik;
+import rs.fon.probniispit.model.Prijava;
+import rs.fon.probniispit.model.PrijavaTermin;
+import rs.fon.probniispit.model.StatusPrijave;
+import rs.fon.probniispit.model.Termin;
 import rs.fon.probniispit.repository.PrijavaRepository;
 import rs.fon.probniispit.repository.TerminRepository;
 
@@ -26,15 +29,21 @@ public class PrijavaService {
     private final PrijavaRepository prijavaRepository;
     private final TerminRepository terminRepository;
     private final CenovnikService cenovnikService;
+    private final UplatnicaServis uplatnicaServis;
+    private final EmailServis emailServis;
     private final Mapper mapper;
 
     public PrijavaService(PrijavaRepository prijavaRepository,
                           TerminRepository terminRepository,
                           CenovnikService cenovnikService,
+                          UplatnicaServis uplatnicaServis,
+                          EmailServis emailServis,
                           Mapper mapper) {
         this.prijavaRepository = prijavaRepository;
         this.terminRepository = terminRepository;
         this.cenovnikService = cenovnikService;
+        this.uplatnicaServis = uplatnicaServis;
+        this.emailServis = emailServis;
         this.mapper = mapper;
     }
 
@@ -71,19 +80,33 @@ public class PrijavaService {
         }
 
         prijava.setUkupnaCena(ukupno);
-        return mapper.uPrijavuDTO(prijavaRepository.save(prijava));
+        Prijava sacuvana = prijavaRepository.save(prijava);
+
+        byte[] uplatnica = uplatnicaServis.napravi(sacuvana);
+        emailServis.posaljiUplatnicu(sacuvana, uplatnica);
+
+        return mapper.uPrijavuDTO(sacuvana);
     }
 
-    public List<Prijava> prijaveKorisnika(Integer korisnikId) {
-        return prijavaRepository.findByKorisnikId(korisnikId);
+    @Transactional(readOnly = true)
+    public List<PrijavaDTO> mojePrijave(Integer korisnikId) {
+        return prijavaRepository.findByKorisnikId(korisnikId)
+                .stream().map(mapper::uPrijavuDTO).toList();
     }
 
-    public List<Prijava> svePrijave() {
-        return prijavaRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<PrijavaDTO> svePrijaveDTO(StatusPrijave status) {
+        List<Prijava> lista = (status == null)
+                ? prijavaRepository.findAll()
+                : prijavaRepository.findByStatus(status);
+        return lista.stream().map(mapper::uPrijavuDTO).toList();
     }
 
-    public List<Prijava> prijavePoStatusu(StatusPrijave status) {
-        return prijavaRepository.findByStatus(status);
+    @Transactional(readOnly = true)
+    public PrijavaDTO mojaPrijava(Integer prijavaId, Integer korisnikId) {
+        return prijavaRepository.findByIdAndKorisnikId(prijavaId, korisnikId)
+                .map(mapper::uPrijavuDTO)
+                .orElseThrow(() -> new NijePronadjenoException("Prijava ne postoji"));
     }
 
     public Optional<Prijava> pronadjiZaKorisnika(Integer prijavaId, Integer korisnikId) {
@@ -111,26 +134,5 @@ public class PrijavaService {
         }
         prijava.setStatus(StatusPrijave.OTKAZANA);
         prijavaRepository.save(prijava);
-    }
-
-    @Transactional(readOnly = true)
-    public List<PrijavaDTO> mojePrijave(Integer korisnikId) {
-        return prijavaRepository.findByKorisnikId(korisnikId)
-                .stream().map(mapper::uPrijavuDTO).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<PrijavaDTO> svePrijaveDTO(StatusPrijave status) {
-        List<Prijava> lista = (status == null)
-                ? prijavaRepository.findAll()
-                : prijavaRepository.findByStatus(status);
-        return lista.stream().map(mapper::uPrijavuDTO).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public PrijavaDTO mojaPrijava(Integer prijavaId, Integer korisnikId) {
-        return prijavaRepository.findByIdAndKorisnikId(prijavaId, korisnikId)
-                .map(mapper::uPrijavuDTO)
-                .orElseThrow(() -> new NijePronadjenoException("Prijava ne postoji"));
     }
 }

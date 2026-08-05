@@ -31,3 +31,8 @@ export const cenovnikApi = {
   sve: () => klijent.get('/cenovnik'),
   postavi: (podaci) => klijent.post('/cenovnik', podaci)
 }
+
+export const uplatniceApi = {
+  preuzmi: (prijavaId) =>
+    klijent.get(`/uplatnice/prijava/${prijavaId}`, { responseType: 'blob' })
+}

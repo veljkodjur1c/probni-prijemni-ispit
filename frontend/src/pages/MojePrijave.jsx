@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { prijaveApi } from '../api/servisi'
+import { prijaveApi, uplatniceApi } from '../api/servisi'
+import { sacuvajFajl } from '../api/preuzimanje'
 
 export default function MojePrijave() {
   const [prijave, setPrijave] = useState([])
@@ -33,20 +34,32 @@ export default function MojePrijave() {
     }
   }
 
+  const preuzmiUplatnicu = async (id) => {
+    setGreska('')
+    try {
+      const odgovor = await uplatniceApi.preuzmi(id)
+      sacuvajFajl(odgovor.data, `uplatnica-${id}.pdf`)
+    } catch {
+      setGreska('Greška pri preuzimanju uplatnice')
+    }
+  }
+
   const oznaka = (status) => {
     const mapa = {
       NA_CEKANJU: ['bg-warning text-dark', 'Na čekanju'],
       PRIJAVLJEN: ['bg-success', 'Prijavljen'],
       OTKAZANA: ['bg-secondary', 'Otkazana']
     }
-    const [klasa, tekst] = mapa[status] || ['bg-light', status]
+    const [klasa, tekst] = mapa[status] || ['bg-light text-dark', status]
     return <span className={`badge ${klasa}`}>{tekst}</span>
   }
 
   const nazivVrste = (v) =>
     v === 'MATEMATIKA' ? 'Matematika' : 'Test opšte informisanosti'
 
-  if (ucitava) return <div className="container">Učitavanje...</div>
+  if (ucitava) {
+    return <div className="container">Učitavanje...</div>
+  }
 
   return (
     <div className="container">
@@ -84,12 +97,29 @@ export default function MojePrijave() {
               </table>
 
               <div className="d-flex justify-content-between align-items-center">
-                <span className="fs-5">Ukupno: <strong>{p.ukupnaCena} RSD</strong></span>
-                {p.status === 'NA_CEKANJU' && (
-                  <button className="btn btn-outline-danger btn-sm" onClick={() => otkazi(p.id)}>
-                    Otkaži prijavu
-                  </button>
-                )}
+                <span className="fs-5">
+                  Ukupno: <strong>{p.ukupnaCena} RSD</strong>
+                </span>
+
+                <div>
+                  {p.status !== 'OTKAZANA' && (
+                    <button
+                      className="btn btn-outline-secondary btn-sm me-2"
+                      onClick={() => preuzmiUplatnicu(p.id)}
+                    >
+                      Uplatnica (PDF)
+                    </button>
+                  )}
+
+                  {p.status === 'NA_CEKANJU' && (
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={() => otkazi(p.id)}
+                    >
+                      Otkaži prijavu
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

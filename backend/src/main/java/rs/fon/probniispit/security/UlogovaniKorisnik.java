@@ -47,4 +47,8 @@ public class UlogovaniKorisnik implements UserDetails {
     public String getUsername() {
         return email;
     }
+
+    public boolean jeAdmin() {
+        return "ADMIN".equals(uloga);
+    }
 }
