@@ -12,7 +12,10 @@ Realizovana kao višeslojna klijent-server aplikacija sa potpuno odvojenim klije
 - Java 21
 - Spring Boot 4.0.7
 - Spring Data JPA / Hibernate
-- Spring Security + JWT
+- Spring Security + JWT (jjwt)
+- Spring Mail (asinhrono slanje)
+- iText 8 (generisanje PDF dokumenata)
+- Apache POI (izvoz u Excel)
 - Maven
 - MySQL / MariaDB
 
@@ -20,6 +23,7 @@ Realizovana kao višeslojna klijent-server aplikacija sa potpuno odvojenim klije
 - React 19 (Vite)
 - React Router
 - Axios
+- Recharts (grafikoni)
 - Bootstrap 5
 
 ---
@@ -69,7 +73,22 @@ Otvorite novi SQL editor, učitajte sadržaj fajla `baza/sema.sql` i izvršite g
 
 Skripta kreira bazu `probni_ispit` sa šest tabela i unosi početne podatke — cenovnik i nekoliko termina.
 
-### 2. Backend
+### 2. Konfiguracija slanja email-a
+
+U `backend/src/main/resources/application.properties` popunite podatke naloga sa kog se šalju potvrde:
+
+```properties
+spring.mail.username=vas-nalog@gmail.com
+spring.mail.password=app-password-bez-razmaka
+app.mail.posiljalac=vas-nalog@gmail.com
+app.mail.ukljucen=true
+```
+
+Za Gmail je potrebna **lozinka za aplikaciju** (App password), ne obična lozinka naloga. Generiše se na `myaccount.google.com/apppasswords` i zahteva uključenu dvostepenu potvrdu.
+
+Ako slanje email-a nije potrebno, postavite `app.mail.ukljucen=false` — aplikacija tada radi normalno, samo preskače slanje.
+
+### 3. Backend
 
 ```bash
 cd backend
@@ -87,7 +106,7 @@ Aplikacija se pokreće na `http://localhost:8080`.
 
 Ako je baza uspešno povezana, u konzoli će se pojaviti red `Started ProbniIspitApplication`.
 
-### 3. Frontend
+### 4. Frontend
 
 U zasebnom terminalu:
 
@@ -124,6 +143,8 @@ UPDATE korisnik SET uloga = 'ADMIN' WHERE email = 'vas@email.rs';
 - Registracija i prijava na sistem
 - Pregled raspoloživih termina sa cenama
 - Prijava jednog ili više termina odjednom, sa prikazom ukupne cene
+- Automatsko dobijanje uplatnice na email nakon prijave
+- Preuzimanje uplatnice u PDF formatu
 - Pregled sopstvenih prijava i njihovog statusa
 - Otkazivanje prijave dok uplata nije evidentirana
 
@@ -133,6 +154,8 @@ UPDATE korisnik SET uloga = 'ADMIN' WHERE email = 'vas@email.rs';
 - Pregled svih prijava, sa filtriranjem po statusu i pretragom po kandidatu
 - Evidentiranje izvršene uplate
 - Pregled spiska prijavljenih kandidata po terminu
+- Izvoz spiska kandidata u Excel
+- Statistički prikazi sa grafikonima
 - Otkazivanje prijave dok uplata nije evidentirana
 
 ---
@@ -143,6 +166,8 @@ UPDATE korisnik SET uloga = 'ADMIN' WHERE email = 'vas@email.rs';
 - Termin na koji postoje prijave ne može biti obrisan.
 - Cena se pamti u trenutku prijave. Naknadna izmena cenovnika ne utiče na već podnete prijave.
 - Isti termin ne može biti izabran više puta u okviru jedne prijave.
+- Kandidat se ne može prijaviti na termin koji je već prošao.
+- Na spisku kandidata za termin nalaze se isključivo prijave sa statusom `PRIJAVLJEN`.
 
 ---
 
@@ -160,6 +185,14 @@ Pomoćni paketi: `model` (JPA entiteti), `dto` (objekti za komunikaciju sa klije
 
 Entiteti se nikad ne izlažu klijentu — komunikacija ide isključivo preko DTO objekata.
 
+### Asinhrono slanje email-a
+
+Nakon uspešne prijave generiše se PDF uplatnica i predaje `EmailServis`-u, čija je metoda označena anotacijom `@Async` i izvršava se u zasebnom thread pool-u (`mailExecutor`).
+
+Odgovor kandidatu vraća se odmah, bez čekanja na SMTP server. Ako slanje ne uspe, greška se beleži u log, ali prijava ostaje ispravno sačuvana.
+
+`EmailServis` je namerno zaseban bean — poziv `@Async` metode unutar iste klase zaobišao bi Spring proxy i izvršio se sinhrono.
+
 ### Model podataka
 
 | Tabela | Opis |
@@ -171,7 +204,7 @@ Entiteti se nikad ne izlažu klijentu — komunikacija ide isključivo preko DTO
 | `prijava_termin` | Spojna tabela sa zapamćenom cenom po stavci |
 | `uplata` | Evidentirana uplata i administrator koji ju je uneo |
 
-Veza između prijave i termina je M:N, razložena kroz spojnu tabelu koja nosi sopstveni podatak — cenu u trenutku prijave.
+Veza između prijave i termina je M:N, razložena kroz spojnu tabelu koja nosi sopstveni podatak — cenu u trenutku prijave. Zbog toga je `PrijavaTermin` modelovan kao poseban entitet sa složenim primarnim ključem (`PrijavaTerminId`), a ne kao prosta `@ManyToMany` veza.
 
 ---
 
@@ -214,12 +247,29 @@ Sve rute imaju prefiks `/api`.
 | POST | `/uplate/prijava/{prijavaId}` | admin |
 | GET | `/uplate/prijava/{prijavaId}` | admin |
 
+### Uplatnice
+
+| Metoda | Putanja | Pristup |
+|---|---|---|
+| GET | `/uplatnice/prijava/{prijavaId}` | kandidat (svoja) / admin (sve) |
+
+Vraća PDF dokument.
+
 ### Cenovnik
 
 | Metoda | Putanja | Pristup |
 |---|---|---|
 | GET | `/cenovnik` | javno |
 | POST | `/cenovnik` | admin |
+
+### Izvoz i statistika
+
+| Metoda | Putanja | Pristup |
+|---|---|---|
+| GET | `/izvoz/spisak/termin/{terminId}` | admin |
+| GET | `/statistika` | admin |
+
+Izvoz vraća `.xlsx` dokument.
 
 Zaštićene rute zahtevaju zaglavlje:
 
@@ -251,6 +301,8 @@ Sve greške vraćaju se u jedinstvenom formatu:
 | 404 | Traženi resurs ne postoji |
 | 409 | Zahtev je u konfliktu sa trenutnim stanjem |
 
+Polje `greskePolja` popunjava se samo kod grešaka validacije i mapira naziv polja na poruku, što omogućava prikaz greške uz odgovarajući unos u formi.
+
 ---
 
 ## Napomene
@@ -258,3 +310,5 @@ Sve greške vraćaju se u jedinstvenom formatu:
 - XAMPP isporučuje MariaDB, koja se predstavlja kao MySQL verzija 5.5.5. Upozorenje o nepodržanom dijalektu pri pokretanju je očekivano i ne utiče na rad aplikacije.
 - Hibernate je podešen na `ddl-auto=validate` — šema se ne menja automatski, već se pri pokretanju proverava poklapanje entiteta sa postojećim tabelama.
 - Lozinke se čuvaju kao BCrypt heš. Korisnici uneti direktno u bazu preko SQL-a ne mogu se prijaviti na sistem.
+- PDF uplatnica koristi podrazumevani font koji ne podržava dijakritičke znake, pa se tekst u dokumentu ispisuje bez njih.
+- CORS je podešen za `http://localhost:5173`. Ako frontend radi na drugom portu, izmenite `BezbednosnaKonfiguracija`.
