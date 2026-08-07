@@ -1,6 +1,9 @@
 package rs.fon.probniispit.controller;
 
 import jakarta.validation.Valid;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -8,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import rs.fon.probniispit.dto.NovaPrijavaZahtev;
 import rs.fon.probniispit.dto.PrijavaDTO;
+import rs.fon.probniispit.dto.StranicaDTO;
 import rs.fon.probniispit.exception.NijePronadjenoException;
 import rs.fon.probniispit.model.Korisnik;
 import rs.fon.probniispit.model.StatusPrijave;
@@ -51,10 +55,21 @@ public class PrijavaController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public List<PrijavaDTO> sve(@RequestParam(required = false) StatusPrijave status) {
-        return prijavaService.svePrijaveDTO(status);
-    }
+@PreAuthorize("hasRole('ADMIN')")
+public StranicaDTO<PrijavaDTO> sve(
+        @RequestParam(required = false) StatusPrijave status,
+        @RequestParam(required = false) String pretraga,
+        @RequestParam(defaultValue = "0") int stranica,
+        @RequestParam(defaultValue = "10") int velicina,
+        @RequestParam(defaultValue = "datumPrijave") String sortiraj,
+        @RequestParam(defaultValue = "desc") String smer) {
+
+    Sort sort = smer.equalsIgnoreCase("asc")
+            ? Sort.by(sortiraj).ascending()
+            : Sort.by(sortiraj).descending();
+
+    return prijavaService.pretrazi(status, pretraga, PageRequest.of(stranica, velicina, sort));
+}
 
     @DeleteMapping("/{id}/admin")
     @PreAuthorize("hasRole('ADMIN')")

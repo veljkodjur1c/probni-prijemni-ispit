@@ -1,8 +1,10 @@
 package rs.fon.probniispit.service;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rs.fon.probniispit.dto.PrijavaDTO;
+import rs.fon.probniispit.dto.StranicaDTO;
 import rs.fon.probniispit.exception.KonfliktException;
 import rs.fon.probniispit.exception.NevalidanZahtevException;
 import rs.fon.probniispit.exception.NijePronadjenoException;
@@ -134,5 +136,15 @@ public class PrijavaService {
         }
         prijava.setStatus(StatusPrijave.OTKAZANA);
         prijavaRepository.save(prijava);
+    }
+
+    @Transactional(readOnly = true)
+    public StranicaDTO<PrijavaDTO> pretrazi(StatusPrijave status,
+                                            String pretraga,
+                                            Pageable pageable) {
+        String tekst = (pretraga == null || pretraga.isBlank()) ? null : pretraga.trim();
+        return StranicaDTO.od(
+                prijavaRepository.pretrazi(status, tekst, pageable),
+                mapper::uPrijavuDTO);
     }
 }

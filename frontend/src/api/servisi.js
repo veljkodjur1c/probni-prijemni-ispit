@@ -17,7 +17,7 @@ export const terminiApi = {
 export const prijaveApi = {
   kreiraj: (terminIds) => klijent.post('/prijave', { terminIds }),
   moje: () => klijent.get('/prijave/moje'),
-  sve: (status) => klijent.get('/prijave', { params: { status } }),
+  sve: (params) => klijent.get('/prijave', { params }),
   otkaziMoju: (id) => klijent.delete(`/prijave/${id}`),
   otkaziKaoAdmin: (id) => klijent.delete(`/prijave/${id}/admin`)
 }

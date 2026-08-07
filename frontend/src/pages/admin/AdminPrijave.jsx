@@ -1,28 +1,69 @@
 import { useEffect, useState } from 'react'
-import { prijaveApi, uplateApi } from '../../api/servisi'
+import { prijaveApi, uplateApi, uplatniceApi } from '../../api/servisi'
+import { sacuvajFajl } from '../../api/preuzimanje'
+import Paginacija from '../../components/Paginacija'
+
+const VELICINA = 5
 
 export default function AdminPrijave() {
-  const [prijave, setPrijave] = useState([])
+  const [stranicaPodataka, setStranicaPodataka] = useState(null)
   const [status, setStatus] = useState('')
   const [pretraga, setPretraga] = useState('')
+  const [primenjenaPretraga, setPrimenjenaPretraga] = useState('')
+  const [stranica, setStranica] = useState(0)
+  const [sortiraj, setSortiraj] = useState('datumPrijave')
+  const [smer, setSmer] = useState('desc')
   const [greska, setGreska] = useState('')
   const [poruka, setPoruka] = useState('')
   const [ucitava, setUcitava] = useState(true)
 
   useEffect(() => {
     ucitaj()
-  }, [status])
+  }, [status, primenjenaPretraga, stranica, sortiraj, smer])
 
   const ucitaj = async () => {
     setUcitava(true)
     try {
-      const odgovor = await prijaveApi.sve(status || undefined)
-      setPrijave(odgovor.data)
+      const odgovor = await prijaveApi.sve({
+        status: status || undefined,
+        pretraga: primenjenaPretraga || undefined,
+        stranica,
+        velicina: VELICINA,
+        sortiraj,
+        smer
+      })
+      setStranicaPodataka(odgovor.data)
     } catch {
       setGreska('Greška pri učitavanju prijava')
     } finally {
       setUcitava(false)
     }
+  }
+
+  const promeniStatus = (noviStatus) => {
+    setStatus(noviStatus)
+    setStranica(0)
+  }
+
+  const pretraziSada = (e) => {
+    e.preventDefault()
+    setPrimenjenaPretraga(pretraga)
+    setStranica(0)
+  }
+
+  const promeniSortiranje = (polje) => {
+    if (sortiraj === polje) {
+      setSmer(smer === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortiraj(polje)
+      setSmer('desc')
+    }
+    setStranica(0)
+  }
+
+  const strelica = (polje) => {
+    if (sortiraj !== polje) return ''
+    return smer === 'asc' ? ' ↑' : ' ↓'
   }
 
   const evidentiraj = async (id) => {
@@ -53,6 +94,16 @@ export default function AdminPrijave() {
     }
   }
 
+  const preuzmiUplatnicu = async (id) => {
+    setGreska('')
+    try {
+      const odgovor = await uplatniceApi.preuzmi(id)
+      sacuvajFajl(odgovor.data, `uplatnica-${id}.pdf`)
+    } catch {
+      setGreska('Greška pri preuzimanju uplatnice')
+    }
+  }
+
   const oznaka = (s) => {
     const mapa = {
       NA_CEKANJU: ['bg-warning text-dark', 'Na čekanju'],
@@ -66,9 +117,7 @@ export default function AdminPrijave() {
   const nazivVrste = (v) =>
     v === 'MATEMATIKA' ? 'Matematika' : 'Test opšte informisanosti'
 
-  const filtrirane = prijave.filter(p =>
-    p.imeKandidata.toLowerCase().includes(pretraga.toLowerCase())
-  )
+  const prijave = stranicaPodataka?.sadrzaj ?? []
 
   return (
     <div className="container">
@@ -77,13 +126,13 @@ export default function AdminPrijave() {
       {greska && <div className="alert alert-danger">{greska}</div>}
       {poruka && <div className="alert alert-success">{poruka}</div>}
 
-      <div className="row mb-4">
-        <div className="col-md-4">
+      <div className="row g-3 mb-4">
+        <div className="col-md-3">
           <label className="form-label">Status</label>
           <select
             className="form-select"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => promeniStatus(e.target.value)}
           >
             <option value="">Sve prijave</option>
             <option value="NA_CEKANJU">Na čekanju</option>
@@ -94,25 +143,56 @@ export default function AdminPrijave() {
 
         <div className="col-md-5">
           <label className="form-label">Pretraga po kandidatu</label>
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Ime ili prezime"
-            value={pretraga}
-            onChange={(e) => setPretraga(e.target.value)}
-          />
+          <form onSubmit={pretraziSada} className="d-flex">
+            <input
+              type="text"
+              className="form-control me-2"
+              placeholder="Ime ili prezime"
+              value={pretraga}
+              onChange={(e) => setPretraga(e.target.value)}
+            />
+            <button type="submit" className="btn btn-outline-secondary">
+              Traži
+            </button>
+          </form>
+        </div>
+
+        <div className="col-md-4">
+          <label className="form-label">Sortiraj po</label>
+          <div className="btn-group w-100">
+            <button
+              className={`btn btn-sm ${sortiraj === 'datumPrijave' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+              onClick={() => promeniSortiranje('datumPrijave')}
+            >
+              Datumu{strelica('datumPrijave')}
+            </button>
+            <button
+              className={`btn btn-sm ${sortiraj === 'ukupnaCena' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+              onClick={() => promeniSortiranje('ukupnaCena')}
+            >
+              Ceni{strelica('ukupnaCena')}
+            </button>
+            <button
+              className={`btn btn-sm ${sortiraj === 'id' ? 'btn-secondary' : 'btn-outline-secondary'}`}
+              onClick={() => promeniSortiranje('id')}
+            >
+              Broju{strelica('id')}
+            </button>
+          </div>
         </div>
       </div>
 
       {ucitava ? (
         <div>Učitavanje...</div>
-      ) : filtrirane.length === 0 ? (
+      ) : prijave.length === 0 ? (
         <div className="alert alert-info">Nema prijava za zadate kriterijume.</div>
       ) : (
         <>
-          <p className="text-muted">Ukupno prijava: {filtrirane.length}</p>
+          <p className="text-muted">
+            Prikazano {prijave.length} od ukupno {stranicaPodataka.ukupnoElemenata} prijava
+          </p>
 
-          {filtrirane.map(p => (
+          {prijave.map(p => (
             <div className="card mb-3" key={p.id}>
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-start mb-3">
@@ -141,31 +221,48 @@ export default function AdminPrijave() {
                   </tbody>
                 </table>
 
-                <div className="d-flex justify-content-between align-items-center">
+                <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                   <span className="fs-5">
                     Ukupno: <strong>{p.ukupnaCena} RSD</strong>
                   </span>
 
-                  {p.status === 'NA_CEKANJU' && (
-                    <div>
+                  <div>
+                    {p.status !== 'OTKAZANA' && (
                       <button
-                        className="btn btn-success btn-sm me-2"
-                        onClick={() => evidentiraj(p.id)}
+                        className="btn btn-outline-secondary btn-sm me-2"
+                        onClick={() => preuzmiUplatnicu(p.id)}
                       >
-                        Evidentiraj uplatu
+                        Uplatnica
                       </button>
-                      <button
-                        className="btn btn-outline-danger btn-sm"
-                        onClick={() => otkazi(p.id)}
-                      >
-                        Otkaži
-                      </button>
-                    </div>
-                  )}
+                    )}
+
+                    {p.status === 'NA_CEKANJU' && (
+                      <>
+                        <button
+                          className="btn btn-success btn-sm me-2"
+                          onClick={() => evidentiraj(p.id)}
+                        >
+                          Evidentiraj uplatu
+                        </button>
+                        <button
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={() => otkazi(p.id)}
+                        >
+                          Otkaži
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           ))}
+
+          <Paginacija
+            stranica={stranicaPodataka.brojStranice}
+            ukupnoStranica={stranicaPodataka.ukupnoStranica}
+            promeni={setStranica}
+          />
         </>
       )}
     </div>

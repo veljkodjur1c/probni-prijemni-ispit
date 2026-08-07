@@ -16,11 +16,11 @@ export default function SpisakPoTerminu() {
   const ucitaj = async () => {
     try {
       const [odgTermini, odgPrijave] = await Promise.all([
-        terminiApi.svi(),
-        prijaveApi.sve('PRIJAVLJEN')
-      ])
-      setTermini(odgTermini.data)
-      setPrijave(odgPrijave.data)
+          terminiApi.svi(),
+          prijaveApi.sve({ status: 'PRIJAVLJEN', velicina: 1000 })
+        ])
+        setTermini(odgTermini.data)
+        setPrijave(odgPrijave.data.sadrzaj)
     } catch {
       setGreska('Greška pri učitavanju podataka')
     } finally {
