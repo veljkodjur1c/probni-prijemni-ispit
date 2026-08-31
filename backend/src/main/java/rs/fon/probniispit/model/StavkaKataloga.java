@@ -1,16 +1,20 @@
 package rs.fon.probniispit.model;
 
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Entity
-@Table(name = "cenovnik")
-public class Cenovnik {
+@Table(name = "stavka_kataloga")
+public class StavkaKataloga {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "katalog_id", nullable = false)
+    private Katalog katalog;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "vrsta_ispita", nullable = false)
@@ -19,10 +23,12 @@ public class Cenovnik {
     @Column(name = "cena", nullable = false, precision = 10, scale = 2)
     private BigDecimal cena;
 
-    @Column(name = "vazi_od", nullable = false)
-    private LocalDate vaziOd;
+    public StavkaKataloga() {
+    }
 
-    public Cenovnik() {
+    public StavkaKataloga(VrstaIspita vrstaIspita, BigDecimal cena) {
+        this.vrstaIspita = vrstaIspita;
+        this.cena = cena;
     }
 
     public Integer getId() {
@@ -31,6 +37,14 @@ public class Cenovnik {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Katalog getKatalog() {
+        return katalog;
+    }
+
+    public void setKatalog(Katalog katalog) {
+        this.katalog = katalog;
     }
 
     public VrstaIspita getVrstaIspita() {
@@ -47,13 +61,5 @@ public class Cenovnik {
 
     public void setCena(BigDecimal cena) {
         this.cena = cena;
-    }
-
-    public LocalDate getVaziOd() {
-        return vaziOd;
-    }
-
-    public void setVaziOd(LocalDate vaziOd) {
-        this.vaziOd = vaziOd;
     }
 }

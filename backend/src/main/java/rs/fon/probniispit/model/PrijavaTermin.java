@@ -23,6 +23,9 @@ public class PrijavaTermin {
     @Column(name = "cena_u_trenutku_prijave", nullable = false, precision = 10, scale = 2)
     private BigDecimal cenaUTrenutkuPrijave;
 
+    @Column(name = "otkazana", nullable = false)
+    private boolean otkazana = false;
+
     public PrijavaTermin() {
     }
 
@@ -31,6 +34,7 @@ public class PrijavaTermin {
         this.termin = termin;
         this.cenaUTrenutkuPrijave = cena;
         this.id = new PrijavaTerminId();
+        this.otkazana = false;
     }
 
     public PrijavaTerminId getId() {
@@ -63,5 +67,13 @@ public class PrijavaTermin {
 
     public void setCenaUTrenutkuPrijave(BigDecimal cenaUTrenutkuPrijave) {
         this.cenaUTrenutkuPrijave = cenaUTrenutkuPrijave;
+    }
+
+    public boolean isOtkazana() {
+        return otkazana;
+    }
+
+    public void setOtkazana(boolean otkazana) {
+        this.otkazana = otkazana;
     }
 }

@@ -55,26 +55,33 @@ public class PrijavaController {
     }
 
     @GetMapping
-@PreAuthorize("hasRole('ADMIN')")
-public StranicaDTO<PrijavaDTO> sve(
-        @RequestParam(required = false) StatusPrijave status,
-        @RequestParam(required = false) String pretraga,
-        @RequestParam(defaultValue = "0") int stranica,
-        @RequestParam(defaultValue = "10") int velicina,
-        @RequestParam(defaultValue = "datumPrijave") String sortiraj,
-        @RequestParam(defaultValue = "desc") String smer) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public StranicaDTO<PrijavaDTO> sve(
+            @RequestParam(required = false) StatusPrijave status,
+            @RequestParam(required = false) String pretraga,
+            @RequestParam(defaultValue = "0") int stranica,
+            @RequestParam(defaultValue = "10") int velicina,
+            @RequestParam(defaultValue = "datumPrijave") String sortiraj,
+            @RequestParam(defaultValue = "desc") String smer) {
 
-    Sort sort = smer.equalsIgnoreCase("asc")
-            ? Sort.by(sortiraj).ascending()
-            : Sort.by(sortiraj).descending();
+        Sort sort = smer.equalsIgnoreCase("asc")
+                ? Sort.by(sortiraj).ascending()
+                : Sort.by(sortiraj).descending();
 
-    return prijavaService.pretrazi(status, pretraga, PageRequest.of(stranica, velicina, sort));
-}
+        return prijavaService.pretrazi(status, pretraga, PageRequest.of(stranica, velicina, sort));
+    }
 
     @DeleteMapping("/{id}/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> otkaziKaoAdmin(@PathVariable Integer id) {
         prijavaService.otkaziKaoAdmin(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{prijavaId}/termini/{terminId}")
+    public PrijavaDTO otkaziTermin(@PathVariable Integer prijavaId,
+                                @PathVariable Integer terminId,
+                                @AuthenticationPrincipal UlogovaniKorisnik ulogovani) {
+        return prijavaService.otkaziTermin(prijavaId, terminId, ulogovani.getId());
     }
 }

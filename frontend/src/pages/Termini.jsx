@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { terminiApi, prijaveApi, cenovnikApi } from '../api/servisi'
+import { terminiApi, prijaveApi, katalogApi } from '../api/servisi'
 import { useAuth } from '../context/AuthContext'
 
 export default function Termini() {
@@ -20,16 +20,16 @@ export default function Termini() {
 
   const ucitaj = async () => {
     try {
-      const [odgTermini, odgCene] = await Promise.all([
-        terminiApi.buduci(),
-        cenovnikApi.sve()
-      ])
+      const [odgTermini, odgKatalog] = await Promise.all([
+      terminiApi.buduci(),
+      katalogApi.vazeci()
+    ])
 
-      setTermini(odgTermini.data)
+    setTermini(odgTermini.data)
 
-      const mapa = {}
-      odgCene.data.forEach(c => { mapa[c.vrstaIspita] = c.cena })
-      setCene(mapa)
+    const mapa = {}
+    odgKatalog.data.stavke.forEach(s => { mapa[s.vrstaIspita] = s.cena })
+    setCene(mapa)
     } catch {
       setGreska('Greška pri učitavanju termina')
     } finally {

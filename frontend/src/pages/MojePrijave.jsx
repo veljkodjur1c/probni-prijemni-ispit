@@ -23,7 +23,7 @@ export default function MojePrijave() {
   }
 
   const otkazi = async (id) => {
-    if (!confirm('Da li ste sigurni da želite da otkažete prijavu?')) return
+    if (!confirm('Da li ste sigurni da želite da otkažete celu prijavu?')) return
 
     setGreska('')
     try {
@@ -31,6 +31,18 @@ export default function MojePrijave() {
       ucitaj()
     } catch (err) {
       setGreska(err.response?.data?.poruka || 'Greška pri otkazivanju')
+    }
+  }
+
+  const otkaziTermin = async (prijavaId, terminId) => {
+    if (!confirm('Otkazati ovaj termin iz prijave?')) return
+
+    setGreska('')
+    try {
+      await prijaveApi.otkaziTermin(prijavaId, terminId)
+      ucitaj()
+    } catch (err) {
+      setGreska(err.response?.data?.poruka || 'Greška pri otkazivanju termina')
     }
   }
 
@@ -56,6 +68,11 @@ export default function MojePrijave() {
 
   const nazivVrste = (v) =>
     v === 'MATEMATIKA' ? 'Matematika' : 'Test opšte informisanosti'
+
+  const precrtano = (otkazana) =>
+    otkazana ? { textDecoration: 'line-through' } : {}
+
+  const brojAktivnih = (p) => p.stavke.filter(s => !s.otkazana).length
 
   if (ucitava) {
     return <div className="container">Učitavanje...</div>
@@ -83,20 +100,40 @@ export default function MojePrijave() {
                 {oznaka(p.status)}
               </div>
 
-              <table className="table table-sm mb-3">
+              <table className="table table-sm align-middle mb-3">
                 <tbody>
                   {p.stavke.map(s => (
-                    <tr key={s.termin.id}>
-                      <td>{new Date(s.termin.datum).toLocaleDateString('sr-RS')}</td>
-                      <td>{s.termin.vremePocetka.substring(0, 5)}</td>
-                      <td>{nazivVrste(s.termin.vrstaIspita)}</td>
-                      <td className="text-end">{s.cena} RSD</td>
+                    <tr key={s.termin.id} className={s.otkazana ? 'text-muted' : ''}>
+                      <td style={precrtano(s.otkazana)}>
+                        {new Date(s.termin.datum).toLocaleDateString('sr-RS')}
+                      </td>
+                      <td style={precrtano(s.otkazana)}>
+                        {s.termin.vremePocetka.substring(0, 5)}
+                      </td>
+                      <td style={precrtano(s.otkazana)}>
+                        {nazivVrste(s.termin.vrstaIspita)}
+                      </td>
+                      <td className="text-end" style={precrtano(s.otkazana)}>
+                        {s.cena} RSD
+                      </td>
+                      <td className="text-end" style={{ width: '110px' }}>
+                        {s.otkazana ? (
+                          <span className="badge bg-secondary">Otkazan</span>
+                        ) : p.status === 'NA_CEKANJU' ? (
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => otkaziTermin(p.id, s.termin.id)}
+                          >
+                            Otkaži
+                          </button>
+                        ) : null}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div className="d-flex justify-content-between align-items-center">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span className="fs-5">
                   Ukupno: <strong>{p.ukupnaCena} RSD</strong>
                 </span>
@@ -111,12 +148,12 @@ export default function MojePrijave() {
                     </button>
                   )}
 
-                  {p.status === 'NA_CEKANJU' && (
+                  {p.status === 'NA_CEKANJU' && brojAktivnih(p) > 1 && (
                     <button
                       className="btn btn-outline-danger btn-sm"
                       onClick={() => otkazi(p.id)}
                     >
-                      Otkaži prijavu
+                      Otkaži celu prijavu
                     </button>
                   )}
                 </div>

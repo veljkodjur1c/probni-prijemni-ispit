@@ -84,8 +84,8 @@ export default function Navigacija() {
                     </Link>
                   </li>
                   <li>
-                    <Link className="dropdown-item" to="/admin/cenovnik" onClick={zatvoriMeni}>
-                      Cenovnik
+                    <Link className="dropdown-item" to="/admin/katalozi" onClick={zatvoriMeni}>
+                      Katalozi cena
                     </Link>
                   </li>
                   <li><hr className="dropdown-divider" /></li>

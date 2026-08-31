@@ -4,5 +4,6 @@ import java.math.BigDecimal;
 
 public record StavkaPrijaveDTO(
         TerminDTO termin,
-        BigDecimal cena
+        BigDecimal cena,
+        boolean otkazana
 ) {}

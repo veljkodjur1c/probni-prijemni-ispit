@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { terminiApi, cenovnikApi } from '../api/servisi'
+import { terminiApi, katalogApi } from '../api/servisi'
 import { useAuth } from '../context/AuthContext'
 
 export default function Pocetna() {
@@ -9,11 +9,11 @@ export default function Pocetna() {
   const [cene, setCene] = useState({})
 
   useEffect(() => {
-    Promise.all([terminiApi.buduci(), cenovnikApi.sve()])
-      .then(([t, c]) => {
+    Promise.all([terminiApi.buduci(), katalogApi.vazeci()])
+      .then(([t, k]) => {
         setTermini(t.data.slice(0, 3))
         const mapa = {}
-        c.data.forEach(x => { mapa[x.vrstaIspita] = x.cena })
+        k.data.stavke.forEach(s => { mapa[s.vrstaIspita] = s.cena })
         setCene(mapa)
       })
       .catch(() => {})
@@ -43,9 +43,7 @@ export default function Pocetna() {
     <div className="container">
       <div className="row align-items-center mb-5">
         <div className="col-lg-7">
-          <h1 className="display-6 mb-3">
-            Probni prijemni ispit
-          </h1>
+          <h1 className="display-6 mb-3">Probni prijemni ispit</h1>
           <p className="fs-5 text-muted mb-4">
             Fakultet organizacionih nauka organizuje probne prijemne ispite iz
             matematike i testa opšte informisanosti. Prijavite se onlajn,

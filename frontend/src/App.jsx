@@ -9,7 +9,7 @@ import MojePrijave from './pages/MojePrijave'
 import AdminTermini from './pages/admin/AdminTermini'
 import AdminPrijave from './pages/admin/AdminPrijave'
 import SpisakPoTerminu from './pages/admin/SpisakPoTerminu'
-import AdminCenovnik from './pages/admin/AdminCenovnik'
+import AdminKatalog from './pages/admin/AdminKatalog'
 import Statistika from './pages/admin/Statistika'
 import Pocetna from './pages/Pocetna'
 
@@ -57,10 +57,10 @@ function App() {
             }
           />
           <Route
-            path="/admin/cenovnik"
+            path="/admin/katalozi"
             element={
               <ZasticenaRuta samoAdmin>
-                <AdminCenovnik />
+                <AdminKatalog />
               </ZasticenaRuta>
             }
           />

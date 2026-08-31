@@ -29,19 +29,33 @@ public class Mapper {
         );
     }
 
-    public CenovnikDTO uCenovnikDTO(Cenovnik c) {
-        return new CenovnikDTO(
-                c.getId(),
-                c.getVrstaIspita().name(),
-                c.getCena(),
-                c.getVaziOd()
+    public StavkaKatalogaDTO uStavkuKatalogaDTO(StavkaKataloga s) {
+        return new StavkaKatalogaDTO(
+                s.getId(),
+                s.getVrstaIspita().name(),
+                s.getCena()
+        );
+    }
+
+    public KatalogDTO uKatalogDTO(Katalog k, boolean vaziDanas) {
+        List<StavkaKatalogaDTO> stavke = k.getStavke().stream()
+                .map(this::uStavkuKatalogaDTO)
+                .toList();
+
+        return new KatalogDTO(
+                k.getId(),
+                k.getNaziv(),
+                k.getVaziOd(),
+                vaziDanas,
+                stavke
         );
     }
 
     public StavkaPrijaveDTO uStavkuDTO(PrijavaTermin pt) {
         return new StavkaPrijaveDTO(
                 uTerminDTO(pt.getTermin()),
-                pt.getCenaUTrenutkuPrijave()
+                pt.getCenaUTrenutkuPrijave(),
+                pt.isOtkazana()
         );
     }
 

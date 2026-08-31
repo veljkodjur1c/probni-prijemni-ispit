@@ -19,7 +19,8 @@ export const prijaveApi = {
   moje: () => klijent.get('/prijave/moje'),
   sve: (params) => klijent.get('/prijave', { params }),
   otkaziMoju: (id) => klijent.delete(`/prijave/${id}`),
-  otkaziKaoAdmin: (id) => klijent.delete(`/prijave/${id}/admin`)
+  otkaziKaoAdmin: (id) => klijent.delete(`/prijave/${id}/admin`),
+  otkaziTermin: (prijavaId, terminId) => klijent.delete(`/prijave/${prijavaId}/termini/${terminId}`)
 }
 
 export const uplateApi = {
@@ -27,9 +28,12 @@ export const uplateApi = {
   zaPrijavu: (prijavaId) => klijent.get(`/uplate/prijava/${prijavaId}`)
 }
 
-export const cenovnikApi = {
-  sve: () => klijent.get('/cenovnik'),
-  postavi: (podaci) => klijent.post('/cenovnik', podaci)
+export const katalogApi = {
+  vazeci: () => klijent.get('/katalozi/vazeci'),
+  svi: () => klijent.get('/katalozi'),
+  jedan: (id) => klijent.get(`/katalozi/${id}`),
+  kreiraj: (podaci) => klijent.post('/katalozi', podaci),
+  obrisi: (id) => klijent.delete(`/katalozi/${id}`)
 }
 
 export const uplatniceApi = {
